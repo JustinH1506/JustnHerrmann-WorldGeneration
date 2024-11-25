@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public class SimpleDungeon : MonoBehaviour
@@ -18,6 +16,7 @@ public class SimpleDungeon : MonoBehaviour
 	
 	//Important parameters for creation.
 	/*
+     * Room count (int)
 	 * Room Size (Vector2 int)
 	 * Room exits (Vector2 int)
 	 * Corridors curve (bool)
@@ -35,60 +34,208 @@ public class SimpleDungeon : MonoBehaviour
 	 */
 
 	[SerializeField] private DungeonTile floorTile;
-
-	[SerializeField, Tooltip("X: From; Y: To")]
-	private Vector2Int roomSize;
+	[SerializeField] private DungeonTile wallTile;
+	[SerializeField] private DungeonTile backgroundTile;
+	
+	[SerializeField] bool useSeed;
+	[SerializeField] private int seed;
+	[SerializeField, Tooltip("X: From; Y: To")] private Vector2Int roomCount;
+	[SerializeField, Tooltip("X: From; Y: To")] private Vector2Int roomSize;
+	[SerializeField, Tooltip("X: From; Y: To")] private Vector2Int possibleExitsPerRoom;
+	[SerializeField, Tooltip("X: From; Y: To")] private Vector2Int corridorLenght;
+	[SerializeField,  Range(0,1)] private float corridorCurviness;
+	[SerializeField, Range(0, 1)] private float corridorBranchingProbability;
 
 	private Transform parentDungeon;
+	[SerializeField] private int totalRoomCount;
+	[SerializeField] private int roomCounter;
 
-	private void Start()
+	private Vector2Int upperRightCorner;
+	private Vector2Int lowerLeftCorner;
+
+	private int runningCoroutines = 0;
+
+
+	struct RoomInfo
 	{
+		public Vector2Int startingPosition;
+		public Vector2Int size;
+		public int exitCount;
+	}
+	
+	struct CorridorInfo
+	{
+		public Vector2Int startingPosition;
+		public int lenght;
+		public Himmelsrichtung direction;
+
+		public CorridorInfo(Vector2Int newStartingPoint, Himmelsrichtung newHimmelsrichtung)
+		{
+			startingPosition = newStartingPoint;
+			direction = newHimmelsrichtung;
+			lenght = 0;
+		}
+	}
+
+	private IEnumerator Start()
+	{
+		if (useSeed)
+		{
+			Random.InitState(seed);
+		}
+		
 		parentDungeon = new GameObject().transform;
 		parentDungeon.gameObject.name = "DungeonPart";
 
-		StartCoroutine(GenerateDungeonRoom(new Vector2Int(0, 0), Random.Range(roomSize.x, roomSize.y), Random.Range(roomSize.x, roomSize.y)));
+		totalRoomCount = Random.Range(roomCount.x, roomCount.y +1);
+
+		StartCoroutine(GenerateDungeonRoom(RandomRoomInfo(new Vector2Int(0,0))));
+
+		yield return new WaitUntil(()
+			=>
+			runningCoroutines == 0
+			);
+
+		StartCoroutine(GenerateBackground());
 	}
 
-	IEnumerator GenerateDungeonRoom(Vector2Int startingPosition, int xSize, int ySize)
+	private void Update()
 	{
-		for (int x = 0; x < xSize; x++)
+		if (Input.GetKeyDown(KeyCode.G))
 		{
-			for (int y = 0; y < ySize; y++)
+			SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+		}
+	}
+
+	IEnumerator GenerateDungeonRoom(RoomInfo roomInfo)
+	{
+		runningCoroutines++;
+		for (int x = 0; x < roomInfo.size.x; x++)
+		{
+			for (int y = 0; y < roomInfo.size.y; y++)
 			{
-				DungeonTile dungeonTile = Instantiate(floorTile, new Vector3(x, y), Quaternion.identity, parentDungeon);
-				dungeonTile.walkable = true;
+				Vector2Int newTilePos = new Vector2Int(x, y) + roomInfo.startingPosition;
+				if (TileCheck(newTilePos))
+				{
+					continue;
+				}
+				Instantiate(floorTile, newTilePos.ToVector3(), Quaternion.identity, parentDungeon);
+				AdjustMapBoundaries(newTilePos);
 				yield return null;
 			}
 		}
 
-		for (int i = 0; i < 100; i++)
+		roomCounter++;
+		if (roomCounter > totalRoomCount)
 		{
-			//Find possible exits
-			//Corridors are not allowed next to each other
-			(Vector2Int, Himmelsrichtung) value =  GetPossibleCorridorPosition(xSize, ySize);
-			Vector2Int corridorPosition = startingPosition + value.Item1;
-			Himmelsrichtung direction = value.Item2;
+			StopAllCoroutines();
+			runningCoroutines = 0;
+			yield break;
+		}
 
-			if (Physics2D.Raycast(corridorPosition.ToVector3() + Vector3.back * 0.2f, Vector3.back))
+		int maxAttempts = 100; // if time -> add function that calculates possible exits.
+		for (int i = 0; i < roomInfo.exitCount;)
+		{
+			CorridorInfo? newCorridorInfo = GetCorridorStartingPoint(roomInfo);
+
+			// add loop
+			
+			if (newCorridorInfo != null)
 			{
-				Debug.Log("Here is already an exit!");
+				CorridorInfo ci = (CorridorInfo)newCorridorInfo;
+				ci.lenght = Random.Range(corridorLenght.x, corridorLenght.y);
+				StartCoroutine(GenerateCorridor(ci));
+				i++;
+			}
+			
+			maxAttempts--;
+			if (maxAttempts <= 0)
+			{
+				break;
+			}
+		}
+
+		runningCoroutines--;
+	}
+
+	CorridorInfo? GetCorridorStartingPoint(RoomInfo roomInfo)
+	{
+		//Find possible exits
+		//Corridors are not allowed next to each other
+		(Vector2Int, Himmelsrichtung) value =  GetPossibleCorridorPosition(roomInfo.size.x, roomInfo.size.y);
+		Vector2Int corridorPosition = roomInfo.startingPosition + value.Item1;
+		Himmelsrichtung direction = value.Item2;
+
+		CorridorInfo? corridorInfo = new CorridorInfo(corridorPosition, direction);
+
+		if (TileCheck(corridorPosition))
+		{
+			//Debug.Log("Here is already an exit!");
+		}
+		else
+		{
+			Vector2Int checkDirection = (direction == Himmelsrichtung.North || direction == Himmelsrichtung.South) ? Vector2Int.right : Vector2Int.up;
+			
+			if (TileCheck(corridorPosition + checkDirection) || TileCheck(corridorPosition - checkDirection))
+			{
+				//Debug.Log("Here is already an exit next to the position!");
 			}
 			else
 			{
-				Vector3 checkDirection = (direction == Himmelsrichtung.North || direction == Himmelsrichtung.South) ? Vector3.right : Vector3.up;
-				
-				
-				if (Physics2D.Raycast(corridorPosition.ToVector3() + checkDirection + Vector3.back * 0.2f, Vector3.forward) || Physics2D.Raycast(corridorPosition.ToVector3() - checkDirection + Vector3.back * 0.2f, Vector3.forward))
+				return corridorInfo;
+			}
+		}
+
+		return null;
+	}
+
+	IEnumerator GenerateCorridor(CorridorInfo corridorInfo)
+	{
+		runningCoroutines++;
+		Vector2Int currentPos = corridorInfo.startingPosition;
+		Himmelsrichtung currentDirection = corridorInfo.direction;
+		
+		for (int i = 0; i < corridorInfo.lenght; i++)
+		{
+			if (TileCheck(currentPos))
+			{
+				yield break;
+			}
+			
+			Instantiate(floorTile, currentPos.ToVector3(), Quaternion.identity, parentDungeon);
+			
+			AdjustMapBoundaries(currentPos);
+
+			if (Random.value < corridorCurviness)
+			{
+				if (Random.value > 0.5f)
 				{
-					Debug.Log("Here is already an exit next to the position!");
+					//Curve nach rechts 
+					currentDirection++;
 				}
 				else
 				{
-					Instantiate(floorTile, new Vector3(corridorPosition.x, corridorPosition.y), Quaternion.identity, parentDungeon);
-					Debug.Log(direction.ToString());
+					//curve nach links
+					currentDirection--;
+				}
+
+				if ((int)currentDirection == 4)
+				{
+					currentDirection = Himmelsrichtung.North;
+				}
+				else if((int)currentDirection == -1)
+				{
+					currentDirection = Himmelsrichtung.West;
 				}
 			}
+			
+			currentPos += HimmelsrichtungToVector(currentDirection);
+			
+			yield return null;
 		}
+
+		StartCoroutine(GenerateDungeonRoom(RandomRoomInfo(currentPos)));
+		runningCoroutines--;
 	}
 
 	(Vector2Int, Himmelsrichtung) GetPossibleCorridorPosition(int x, int y)
@@ -104,6 +251,81 @@ public class SimpleDungeon : MonoBehaviour
 
 		return (possiblePosition[ranNumber], (Himmelsrichtung)ranNumber);
 	}
+
+	Vector2Int HimmelsrichtungToVector(Himmelsrichtung himmelsrichtung)
+	{
+		switch (himmelsrichtung)
+		{
+			case Himmelsrichtung.North:
+				return Vector2Int.up;
+			case Himmelsrichtung.East:
+				return Vector2Int.left;
+			case Himmelsrichtung.South:
+				return Vector2Int.down;
+			case Himmelsrichtung.West:
+				return Vector2Int.left;
+			default:
+				return Vector2Int.zero;
+		}
+	}
+
+	DungeonTile TileCheck(Vector2Int checkPosition)
+	{
+		RaycastHit2D hit = Physics2D.Raycast(checkPosition.ToVector3() + Vector3.back * 0.2f, Vector3.forward);
+
+		if (hit)
+		{
+			return Physics2D.Raycast(checkPosition.ToVector3() + Vector3.back * 0.2f, Vector3.forward).transform.GetComponent<DungeonTile>();
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+	RoomInfo RandomRoomInfo(Vector2Int startingPoint)
+	{
+		return new RoomInfo()
+		{
+			startingPosition = startingPoint,
+			size = new Vector2Int(Random.Range(roomSize.x, roomSize.y), Random.Range(roomSize.x, roomSize.y)),
+			exitCount = Random.Range(possibleExitsPerRoom.x, possibleExitsPerRoom.y + 1)
+		};
+	}
+
+	void AdjustMapBoundaries(Vector2Int currentPoint)
+	{
+		upperRightCorner.x = Mathf.Max(upperRightCorner.x, currentPoint.x);
+		lowerLeftCorner.x = Mathf.Min(lowerLeftCorner.x, currentPoint.x);
+
+		upperRightCorner.y = Mathf.Max(upperRightCorner.y, currentPoint.y);
+		lowerLeftCorner.y = Mathf.Min(lowerLeftCorner.y, currentPoint.y);
+	}
+
+	IEnumerator GenerateBackground()
+	{
+		for (int x = lowerLeftCorner.x; x < upperRightCorner.x + 2; x++)
+		{
+			for (int y = lowerLeftCorner.y; y < upperRightCorner.y + 2; y++)
+			{
+				Vector2Int currentPos = new Vector2Int(x, y);
+				DungeonTile dt = TileCheck(currentPos);
+				
+				if (dt && dt.walkable)
+				{
+					if (!TileCheck(currentPos + Vector2Int.up))
+					{
+						Instantiate(wallTile, (currentPos + Vector2Int.up).ToVector3(), Quaternion.identity, parentDungeon);
+					}
+				}
+				else if(!dt)
+				{
+					Instantiate(backgroundTile, currentPos.ToVector3(), Quaternion.identity, parentDungeon);
+				}
+			}
+			yield return null;
+		}
+	}
 }
 
 public static class Extensions
@@ -113,4 +335,3 @@ public static class Extensions
 		return new Vector3(vector2Int.x, vector2Int.y);
 	}
 }
-

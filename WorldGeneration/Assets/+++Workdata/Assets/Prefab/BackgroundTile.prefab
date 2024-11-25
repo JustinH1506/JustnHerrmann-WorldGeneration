@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1581140560976029461}
   - component: {fileID: 5493794153201863718}
   m_Layer: 0
-  m_Name: FloorTile
+  m_Name: BackgroundTile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78,7 +78,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2065798357, guid: 71e9ef5fe7cddb14085d10c98ddcf109, type: 3}
+  m_Sprite: {fileID: 1221717807, guid: 925627e60e1645f488c979a72a06fc05, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -102,9 +102,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   possibleTileSprite:
-  - {fileID: -2065798357, guid: 71e9ef5fe7cddb14085d10c98ddcf109, type: 3}
+  - {fileID: 1221717807, guid: 925627e60e1645f488c979a72a06fc05, type: 3}
   probabilityDifference: 0
-  walkable: 1
+  walkable: 0
 --- !u!61 &5493794153201863718
 BoxCollider2D:
   m_ObjectHideFlags: 0
