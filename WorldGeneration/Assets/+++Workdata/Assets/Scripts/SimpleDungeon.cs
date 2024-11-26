@@ -53,7 +53,8 @@ public class SimpleDungeon : MonoBehaviour
 	private Vector2Int upperRightCorner;
 	private Vector2Int lowerLeftCorner;
 
-	private int runningCoroutines = 0;
+	private int runningCoroutine = 0;
+	private bool isGenerationFinished = false;
 
 
 	struct RoomInfo
@@ -77,26 +78,34 @@ public class SimpleDungeon : MonoBehaviour
 		}
 	}
 
-	private IEnumerator Start()
+	private void Start()
+	{
+		GenerateDungeon();
+	}
+	
+	void GenerateDungeon()
 	{
 		if (useSeed)
 		{
 			Random.InitState(seed);
 		}
-		
+        
 		parentDungeon = new GameObject().transform;
-		parentDungeon.gameObject.name = "DungeonPart";
+		parentDungeon.gameObject.name = "DungeonParent";
 
-		totalRoomCount = Random.Range(roomCount.x, roomCount.y +1);
-
+		totalRoomCount = Random.Range(roomCount.x, roomCount.y + 1);
+        
 		StartCoroutine(GenerateDungeonRoom(RandomRoomInfo(new Vector2Int(0,0))));
-
-		yield return new WaitUntil(()
-			=>
-			runningCoroutines == 0
-			);
-
-		StartCoroutine(GenerateBackground());
+	}
+	
+	void Reset()
+	{
+		upperRightCorner = new Vector2Int();
+		lowerLeftCorner = new Vector2Int();
+		StopAllCoroutines();
+		Destroy(parentDungeon.gameObject);
+		roomCounter = 0;
+		isGenerationFinished = false;
 	}
 
 	private void Update()
@@ -105,11 +114,26 @@ public class SimpleDungeon : MonoBehaviour
 		{
 			SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 		}
+		
+		if (!isGenerationFinished && runningCoroutine == 0)
+		{
+			if (totalRoomCount <= roomCounter)
+			{
+				isGenerationFinished = true;
+				Debug.Log("generateBackground");
+				StartCoroutine(GenerateBackground());
+			}
+			else
+			{
+				Reset();
+				GenerateDungeon();
+			}
+		}
 	}
 
 	IEnumerator GenerateDungeonRoom(RoomInfo roomInfo)
 	{
-		runningCoroutines++;
+		runningCoroutine++;
 		for (int x = 0; x < roomInfo.size.x; x++)
 		{
 			for (int y = 0; y < roomInfo.size.y; y++)
@@ -121,15 +145,15 @@ public class SimpleDungeon : MonoBehaviour
 				}
 				Instantiate(floorTile, newTilePos.ToVector3(), Quaternion.identity, parentDungeon);
 				AdjustMapBoundaries(newTilePos);
-				yield return null;
 			}
 		}
+		yield return null;
 
 		roomCounter++;
 		if (roomCounter > totalRoomCount)
 		{
 			StopAllCoroutines();
-			runningCoroutines = 0;
+			runningCoroutine = 0;
 			yield break;
 		}
 
@@ -155,7 +179,7 @@ public class SimpleDungeon : MonoBehaviour
 			}
 		}
 
-		runningCoroutines--;
+		runningCoroutine--;
 	}
 
 	CorridorInfo? GetCorridorStartingPoint(RoomInfo roomInfo)
@@ -191,7 +215,7 @@ public class SimpleDungeon : MonoBehaviour
 
 	IEnumerator GenerateCorridor(CorridorInfo corridorInfo)
 	{
-		runningCoroutines++;
+		runningCoroutine++;
 		Vector2Int currentPos = corridorInfo.startingPosition;
 		Himmelsrichtung currentDirection = corridorInfo.direction;
 		
@@ -230,12 +254,11 @@ public class SimpleDungeon : MonoBehaviour
 			}
 			
 			currentPos += HimmelsrichtungToVector(currentDirection);
-			
-			yield return null;
 		}
+		yield return null;
 
 		StartCoroutine(GenerateDungeonRoom(RandomRoomInfo(currentPos)));
-		runningCoroutines--;
+		runningCoroutine--;
 	}
 
 	(Vector2Int, Himmelsrichtung) GetPossibleCorridorPosition(int x, int y)
