@@ -696,8 +696,11 @@ MonoBehaviour:
     type: 3}
   prefabWater: {fileID: 1581140560976029461, guid: 67d4989c2a422394baa452c26ac27082,
     type: 3}
+  prefabTree: {fileID: 1581140560976029461, guid: 34ff4eccf95449343a1056a188919eca,
+    type: 3}
   sizeWorld: {x: 100, y: 100}
   scaleNoise: 0.09
+  plusNoise: 25
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

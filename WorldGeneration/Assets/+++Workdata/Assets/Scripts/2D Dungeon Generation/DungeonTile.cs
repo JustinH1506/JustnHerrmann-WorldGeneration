@@ -10,7 +10,8 @@ public class DungeonTile : MonoBehaviour
 		Mountain,
 		Floor,
 		Wall,
-		Background
+		Background,
+		Tree
 	}
 	
 	[SerializeField] private Sprite[] possibleTileSprite;

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1581140560976029461}
   - component: {fileID: 5493794153201863718}
   m_Layer: 0
-  m_Name: WaterTile
+  m_Name: TreeTile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77,8 +77,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: -1529788646, guid: d0828e2ae4ef50846ad9b3b67ff3cd75, type: 3}
+  m_SortingOrder: 5
+  m_Sprite: {fileID: -1923613592, guid: d0828e2ae4ef50846ad9b3b67ff3cd75, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -104,7 +104,7 @@ MonoBehaviour:
   possibleTileSprite: []
   probabilityDifference: 0.514
   walkable: 0
-  tileType: 6
+  tileType: 0
 --- !u!61 &5493794153201863718
 BoxCollider2D:
   m_ObjectHideFlags: 0
