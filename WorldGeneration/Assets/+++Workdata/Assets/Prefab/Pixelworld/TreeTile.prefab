@@ -104,7 +104,7 @@ MonoBehaviour:
   possibleTileSprite: []
   probabilityDifference: 0.514
   walkable: 0
-  tileType: 0
+  tileType: 6
 --- !u!61 &5493794153201863718
 BoxCollider2D:
   m_ObjectHideFlags: 0

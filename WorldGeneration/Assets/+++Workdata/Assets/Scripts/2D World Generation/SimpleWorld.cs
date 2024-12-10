@@ -1,5 +1,3 @@
-using System;
-using TreeEditor;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -16,6 +14,9 @@ public class SimpleWorld : MonoBehaviour
 
 	[SerializeField] private float scaleNoise;
 	[SerializeField] private float plusNoise;
+
+	[SerializeField] private bool spawnTrees;
+	[SerializeField] private bool beautifyEdges;
 
 	private void Start()
 	{
@@ -45,7 +46,15 @@ public class SimpleWorld : MonoBehaviour
 			}
 		}
 		FindAnyObjectByType<CinemachineCamera>().Follow = Instantiate(prefabCharacter).transform;
-		GenerateTrees();
+		
+		if (beautifyEdges) { GenerateEdgeTiles(); }
+		
+		if (spawnTrees) { GenerateTrees(); }
+	}
+
+	private void GenerateEdgeTiles()
+	{
+		
 	}
 
 	void GenerateTrees()
@@ -54,8 +63,8 @@ public class SimpleWorld : MonoBehaviour
 		{
 			for (int y = 0; y < sizeWorld.y; y++)
 			{
-				float value = Mathf.PerlinNoise( plusNoise * scaleNoise,  plusNoise * scaleNoise);
-				plusNoise++;
+				float value = Mathf.PerlinNoise( x * plusNoise * scaleNoise, y *  plusNoise * scaleNoise);
+				
 				Debug.Log(value);
 				DungeonTile dungeonTile = TileCheck(new Vector2Int(x,y));
 				
