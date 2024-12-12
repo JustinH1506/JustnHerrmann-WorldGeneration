@@ -226,7 +226,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 50
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -251,7 +251,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 50, y: 50, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -642,6 +642,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1140511801
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1140511802}
+  m_Layer: 0
+  m_Name: TileParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1140511802
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140511801}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 30.386755, y: 27.910967, z: 0.37798613}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1375458025
 GameObject:
   m_ObjectHideFlags: 0
@@ -704,7 +735,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 60
-    OrthographicSize: 5
+    OrthographicSize: 50
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -731,7 +762,7 @@ Transform:
   m_GameObject: {fileID: 1375458025}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 50, y: 50, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -769,7 +800,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rules: {fileID: 11400000, guid: 9e158d49a6559c645ae20cb0d8e47155, type: 2}
   waitTime: 0
-  visualise: 0
+  visualise: 1
+  biomePosition: 0.68
   lineRenderer: {fileID: 480500342}
 --- !u!4 &1487021630
 Transform:
@@ -798,9 +830,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9e29005b21419e4093855cee6e1a1b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: {x: 50, y: 50}
+  size: {x: 40, y: 40}
   prefabBaseTile: {fileID: 8663661446696608623, guid: 67fd4bea0ba51a44c990e33eee1b4f7a,
     type: 3}
+  baseTileParent: {fileID: 1140511802}
 --- !u!1 &1599699632
 GameObject:
   m_ObjectHideFlags: 0
@@ -913,8 +946,9 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 1599699634}
-  - {fileID: 832575519}
   - {fileID: 252397841}
   - {fileID: 1375458028}
   - {fileID: 480500343}
   - {fileID: 1487021630}
+  - {fileID: 1140511802}
+  - {fileID: 832575519}
